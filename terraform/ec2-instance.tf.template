@@ -1,0 +1,18 @@
+resource "aws_instance" "NETGURU_INSTANCE_NAME" {
+  ami                  = "${data.aws_ami.ubuntu.id}"
+  instance_type        = "${var.instance_type}"
+  monitoring           = false
+  key_name             = "${aws_key_pair.deploy.id}"
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = 33
+  }
+
+  tags = {
+    Name         = "${var.project}-${var.environment}-NETGURU_USERNAME"
+    Project_name = "${var.project}"
+    Terraform    = "true"
+    Environment  = "${var.environment}"
+  }
+}
