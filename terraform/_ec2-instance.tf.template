@@ -19,6 +19,30 @@ resource "aws_instance" "NETGURU_INSTANCE_NAME" {
     Terraform    = "true"
     Environment  = "${var.environment}"
   }
+
+  provisioner "file" {
+    source      = "provision/apt.sh"
+    destination = "/tmp/apt.sh"
+
+    connection {
+      type = "ssh"
+      user = "ubuntu"
+      private_key = "${file("${path.module}/stefan.burningminds2019")}"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/apt.sh",
+      "/tmp/apt.sh",
+    ]
+
+    connection {
+      type = "ssh"
+      user = "ubuntu"
+      private_key = "${file("${path.module}/stefan.burningminds2019")}"
+    }
+  }
 }
 
 output "NETGURU_USERNAME_public_ip" {
