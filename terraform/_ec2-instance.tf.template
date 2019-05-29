@@ -9,10 +9,22 @@ resource "aws_instance" "NETGURU_INSTANCE_NAME" {
     volume_size = 33
   }
 
+  vpc_security_group_ids = [
+    "${aws_security_group.burningminds.id}"
+  ]
+
   tags = {
     Name         = "${var.project}-${var.environment}-NETGURU_USERNAME"
     Project_name = "${var.project}"
     Terraform    = "true"
     Environment  = "${var.environment}"
   }
+}
+
+output "NETGURU_USERNAME_public_ip" {
+  value = "${aws_instance.NETGURU_INSTANCE_NAME.public_ip}"
+}
+
+output "NETGURU_USERNAME_public_dns" {
+  value = "${aws_instance.NETGURU_INSTANCE_NAME.public_dns}"
 }

@@ -7,9 +7,9 @@ variable "instance_type" {
 }
 
 variable "project" {
-  default = "burningminds2019"
+  default = "burningminds"
 }
 
 variable "environment" {
-  default = "production"
+  default = "2019"
 }
