@@ -28,8 +28,12 @@
         - python3-setuptools
         - build-essential
 
+    - name: Install pip3
+      become: yes
+      shell: |
+        pip3 install -U pip requests || true
+
     - name: Install docker-compose
       become: yes
       shell: |
-        pip install -U pip
-        pip install docker-compose
+        pip3 install docker-compose || true

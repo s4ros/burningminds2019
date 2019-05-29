@@ -20,3 +20,5 @@ play:
 
 destroy:
 	bin/destroy-all-ec2-resources.sh
+
+gogogo: update play
