@@ -28,3 +28,15 @@ output "NETGURU_USERNAME_public_ip" {
 output "NETGURU_USERNAME_public_dns" {
   value = "${aws_instance.NETGURU_INSTANCE_NAME.public_dns}"
 }
+
+output "NETGURU_USERNAME_fqdn" {
+  value = "${aws_route53_record.NETGURU_USERNAME.fqdn}"
+}
+
+resource "aws_route53_record" "NETGURU_USERNAME" {
+  zone_id = "${var.r53_zone}"
+  name    = "NETGURU_USERNAME.${var.r53_domain}"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.NETGURU_INSTANCE_NAME.public_ip}"]
+}

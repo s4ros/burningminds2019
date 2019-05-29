@@ -13,3 +13,11 @@ variable "project" {
 variable "environment" {
   default = "2019"
 }
+
+variable "r53_zone" {
+  default = ""
+}
+
+variable "r53_domain" {
+  default = "bm.devguru.co"
+}
