@@ -1,0 +1,13 @@
+- hosts: all
+  user: ubuntu
+  become: yes
+  tasks:
+    - name: Adjust ubuntu user
+      user:
+        name: ubuntu
+        groups: root,ubuntu,docker,sudo
+        append: yes
+        shell: /bin/bash
+        generate_ssh_key: yes
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
