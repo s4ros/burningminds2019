@@ -23,24 +23,49 @@ Before we start you need to prepare some stuff.
 # Workshop Steps
 
 ## Create new repository on GitHub with README.md
+- https://github.com/new
 
 ## configure ~/.ssh/config and clone new repo
 
 - download ssh private key
-
+-
 ```shell
 curl YOUR_NAME.bm.devguru.co/dej_klucz | tee ~/.ssh/burningminds
+chmod 600 ~/.ssh/burningminds
+ssh-add ~/.ssh/burningminds
+```
+
+- `~/.ssh/config`
+
+```shell
+Host burningminds.repo
+  Hostname github.com
+  User git
+  Port 22
+  IdentityFile ~/.ssh/burningminds
+
+Host burningminds
+  Hostname YOUR_NAME.bm.devguru.co
+  User ubuntu
+  Port 22
+  IdentityFile ~/.ssh/burningminds
+```
+
+```shell
+ssh burningminds.repo
+ssh burningminds'docker kill kluczyk'
 ```
 
 ## Download WordPress
 - Go to Google -> search for: `wordpress download`
 - Download wordpress
 - Unpack it:
+-
 ```shell
 tar -zxvf archive.tar.gz
 ```
 - git initial commit
-
+-
 ```shell
 git add -Av .
 git commit -m 'Initial WordPress commit'
@@ -49,13 +74,13 @@ git push origin master
 
 ## Launch Dockerized MySQL server
 - create external docker network
-
+-
 ```shell
 docker network create wordpress
 ```
 
 - run mysql container
-
+- 
 ```shell
 docker run --rm --name mysql \
 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=wordpress \
