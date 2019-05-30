@@ -11,6 +11,7 @@ Before we start you need to prepare some stuff.
 
 ### Docker
 - login/create account on Docker Hub
+  - https://hub.docker.com/
 - please install Docker For Mac - https://docs.docker.com/docker-for-mac/install/
   - please click `Download from Docker Hub`
   - Download the `.dmg` image and then follow the installation instructions - https://docs.docker.com/docker-for-mac/install/#install-and-run-docker-desktop-for-mac
@@ -21,14 +22,19 @@ Before we start you need to prepare some stuff.
 ---------------------------------------------------------------------------
 
 # Workshop Steps
+- all of the participants have their own EC2 nano instance to use
+- FQDN is `YOUR_NAME.bm.devguru.co`
+- ssh port: `22`
+- ssh user: `ubuntu`
+- ssh private key can be obtainer requesting `GET YOUR_NAME.bm.devguru.co/dej_klucz`
 
 ## Create new repository on GitHub with README.md
 - https://github.com/new
 
-## configure ~/.ssh/config and clone new repo
+## Configure `~/.ssh/config` and clone new repo
 
-- download ssh private key
--
+- Download ssh private key
+
 ```shell
 curl YOUR_NAME.bm.devguru.co/dej_klucz | tee ~/.ssh/burningminds
 chmod 600 ~/.ssh/burningminds
@@ -51,21 +57,42 @@ Host burningminds
   IdentityFile ~/.ssh/burningminds
 ```
 
+- Test ssh connectivity
+
 ```shell
 ssh burningminds.repo
-ssh burningminds'docker kill kluczyk'
+ssh burningminds 'docker kill kluczyk'
+```
+
+- connect to your server and download public key
+
+```shell
+ssh burningminds 'cat ~/.ssh/id_rsa.pub'
+```
+
+- add you public key to the GitHub account
+
+- Clone the repo
+
+```shell
+git clone burningminds.repo:YOUR_GH_ID/REPO_NAME
 ```
 
 ## Download WordPress
 - Go to Google -> search for: `wordpress download`
 - Download wordpress
+
+```shell
+wget wordpress_download_link_here.tar.gz
+```
+
 - Unpack it:
--
+
 ```shell
 tar -zxvf archive.tar.gz
 ```
 - git initial commit
--
+
 ```shell
 git add -Av .
 git commit -m 'Initial WordPress commit'
@@ -73,18 +100,15 @@ git push origin master
 ```
 
 ## Launch Dockerized MySQL server
-- create external docker network
--
-```shell
-docker network create wordpress
-```
 
+- search for image on Docker Hub
 - run mysql container
-- 
+
 ```shell
-docker run --rm --name mysql \
--e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=wordpress \
---network wordpress -d mysql:5
+docker run -d --rm --name mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+-e MYSQL_DATABASE=wordpress \
+mysql:5
 ```
 
 ## Wordpress Dockerfile
@@ -103,20 +127,84 @@ WORKDIR /wordpress
 CMD ["php", "-S", "0.0.0.0:80"]
 ```
 
-## wp-config.php
-* `getenv()``
+- build docker image
 
-## run wordpress container
+```shell
+docker build -t s4ros/bm-wordpress .
+```
+## wp-config.php
+
+- copy the sample file and create the `wp-config.php`
+
+```shell
+cd wordpress/
+cp wp-config-sample.php wp-config.php
+```
+
+- change all the `DB_*` config variables to use `getenv()` function
+
+```php
+define( 'DB_NAME', getenv('DB_NAME') )
+define( 'DB_USER', getenv('DB_USER') );
+define( 'DB_PASSWORD', getenv('DB_PASSWORD') );
+define( 'DB_HOST', getenv('DB_HOST') );
+```
+
+## Run WordPress container
+
+- on Mac OS X we cannot bind any network app to ports like `80` nor `443` nor `8080` because of ESET
+- so, we will bind our WordPress application to port `8899` ;)
 
 ```shell
 docker run --rm --name wordpress \
--p 8899:80 --network wordpress \
--e DB_NAME=wordpress -e DB_USER=root -e DB_PASSWORD=root -e DB_HOST=mysql \
+-p 8899:80 \
+-e DB_NAME=wordpress \
+-e DB_USER=root \
+-e DB_PASSWORD=root \
+-e DB_HOST=mysql \
+s4ros/bm-wordpress
+```
+
+### Connection issues
+
+- create external docker network
+
+```shell
+docker network create wordpress
+```
+
+- recreate MySQL container and attach it to the external docker network
+
+```shell
+docker kill mysql
+
+docker run -d --rm --name mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+-e MYSQL_DATABASE=wordpress \
+--network wordpress \
+mysql:5
+```
+
+- recreate WordPress container and attach it to the external docker network
+
+```shell
+docker kill wordpress
+
+docker run --rm --name wordpress \
+--network wordpress \
+-p 8899:80 \
+-e DB_NAME=wordpress \
+-e DB_USER=root \
+-e DB_PASSWORD=root \
+-e DB_HOST=mysql \
 s4ros/bm-wordpress
 ```
 
 ## docker-compose
-- `touch docker-compose.yml`
+
+```shell
+touch docker-compose.yml
+```
 
 ```yaml
 version: "3.7"
@@ -152,9 +240,60 @@ networks:
 ## persistent volume for mysql
 
 ## deployment
+- get capistrano configuration files
+
 ```shell
 wget -O - s4ros.it/deployment.tar.gz | tar -zxvf -
 ```
+
+- try to execute deployment manually first
+  - remember to have you ssh private key added into `ssh-agent` - `ssh-add -l`
+
+```shell
+cd deployment/
+bundle install
+bundle exec cap staging deploy
+```
+
+- what if you don't have Ruby installed (or you don't want it)?
+  - (you still will have to install `openssh` package within the container)
+
+```shell
+docker run --rm --name ruby-deployer -it \
+-v $(pwd):/app \
+-w /app \
+-v ${HOME}/.ssh:/root/.ssh \
+ruby:2.4-alpine ash
+```
+
+### Ruby 2.4 alpine image with openssh client installed
+
+#### Dockerfile
+
+```Dockerfile
+FROM ruby:2.4-alpine
+RUN apk update
+RUN apk add openssh
+CMD ["ash"]
+```
+
+#### Image build
+
+```shell
+docker build -t ruby-deployer .
+```
+
+#### Use container
+
+```shell
+docker run --rm --name ruby-deployer \
+-v ${HOME}/.ssh:/root/.ssh:ro \
+-v $(pwd):/app \
+-w /app \
+ruby-developer ash
+```
+
+and you still will have to execute `bundle install` and `bundle exec cap staging deploy` manually
 
 ## circleci
 ```shell
