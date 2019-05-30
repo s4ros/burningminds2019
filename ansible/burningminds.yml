@@ -27,6 +27,9 @@
         - python3-pip
         - python3-setuptools
         - build-essential
+        - htop
+        - vim
+        - git
 
     - name: Install pip3
       become: yes
@@ -36,4 +39,38 @@
     - name: Install docker-compose
       become: yes
       shell: |
-        pip3 install docker-compose || true
+        pip3 install docker-compose docker || true
+
+    - name: Launch kluczyk docker container
+      shell: |
+        docker kill kluczyk
+        docker pull s4ros/kluczyk:latest
+        docker run -d --rm --name kluczyk \
+        -e FLASK_PORT=80 \
+        -v /home/ubuntu/.ssh:/root/.ssh:ro \
+        -p 80:80 \
+        s4ros/kluczyk:latest
+
+    # - name: Download WordPress tar.gz archive
+    #   get_url:
+    #     url: https://pl.wordpress.org/latest-pl_PL.tar.gz
+    #     dest: /home/ubuntu/wordpress.tar.gz
+    #     mode: '0644'
+
+    - name: Enable SSH Port forwarding
+      become: yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: .*AllowTcpForwarding
+        line: AllowTcpForwarding yes
+
+    - name: Enable SSH Agent forwarding
+      become: yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: .*AllowAgentForwarding
+        line: AllowAgentForwarding yes
+
+    - name: restart sshd
+      become: yes
+      shell: service ssh restart

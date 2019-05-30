@@ -2,6 +2,8 @@
 # Created by https://www.gitignore.io/api/terraform
 # Edit at https://www.gitignore.io/?templates=terraform
 
+people.txt
+**/inventory/hosts
 *.retry
 ec2-*.tf
 
